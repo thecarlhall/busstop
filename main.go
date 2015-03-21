@@ -12,20 +12,20 @@ import (
 
 func main() {
 	growl := flag.Bool("growl", false, "whether to use growl notifications")
+	locationId := flag.Int("locationId", 13168, "location ID to track")
 	flag.Parse()
 
-	locationId := 13168
-	doc, err := goquery.NewDocument(fmt.Sprintf("http://trimet.org/arrivals/small/tracker?locationID=%d", locationId))
+	doc, err := goquery.NewDocument(fmt.Sprintf("http://trimet.org/arrivals/small/tracker?locationID=%d", *locationId))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	title := fmt.Sprintf("Bus Stop - %d", locationId)
+	title := fmt.Sprintf("Bus Stop - %d", *locationId)
 
 	selection := doc.Find("ul#arrivalslist.group > li")
 	messages := make([]string, selection.Length())
 	selection.Each(func(i int, s *goquery.Selection) {
-		messages[i] = fmt.Sprint(s.Find("p.clear").Text(), " in ", s.Find("p.arrival").Text())
+		messages[i] = fmt.Sprint(strings.TrimSpace(s.Find("h3").Text()), "\n    ", s.Find("p.clear").Text(), " in ", s.Find("p.arrival").Text())
 	})
 
 	message := strings.Join(messages, "\n")
