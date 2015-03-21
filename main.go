@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os/exec"
@@ -10,6 +11,9 @@ import (
 )
 
 func main() {
+	growl := flag.Bool("growl", false, "whether to use growl notifications")
+	flag.Parse()
+
 	locationId := 13168
 	doc, err := goquery.NewDocument(fmt.Sprintf("http://trimet.org/arrivals/small/tracker?locationID=%d", locationId))
 	if err != nil {
@@ -25,9 +29,14 @@ func main() {
 	})
 
 	message := strings.Join(messages, "\n")
-	script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
-	cmd := exec.Command("/usr/bin/osascript", "-e", script)
-	if err = cmd.Run(); err != nil {
-		log.Fatal(err)
+	if *growl {
+		script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
+		cmd := exec.Command("/usr/bin/osascript", "-e", script)
+		if err = cmd.Run(); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println(title)
+		fmt.Println(message)
 	}
 }
