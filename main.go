@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"strings"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 func displayMessage(title string, message string, showGrowl bool) {
@@ -23,30 +20,42 @@ func displayMessage(title string, message string, showGrowl bool) {
 	}
 }
 
-func titleAndMessage(doc *goquery.Document, locationId int) (string, string) {
-	title := fmt.Sprintf("Bus Stop - %d", locationId)
+func printRouteInfo(locationID int, rs *ResultSet) {
+	fmt.Printf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", locationID))
+	for _, arrival := range rs.Arrival {
+		fmt.Printf("%-60s [%s]\n", arrival.FullSign, arrival.arrivalTime())
+	}
+}
 
-	selection := doc.Find("ul#arrivalslist.group > li")
-	messages := make([]string, selection.Length())
-	selection.Each(func(i int, s *goquery.Selection) {
-		messages[i] = fmt.Sprint(strings.TrimSpace(s.Find("h3").Text()), "\n    ", s.Find("p.clear").Text(), " in ", s.Find("p.arrival").Text())
-	})
-
-	message := strings.Join(messages, "\n")
-
-	return title, message
+func printHelp() {
+	fmt.Println("  busstop [OPTIONS]")
+	fmt.Println("")
+	fmt.Println("  Required")
+	fmt.Println("    --appID <app_id>")
+	fmt.Println("    --locationID <loc_id>")
+	fmt.Println("")
+	fmt.Println("  Optional")
+	fmt.Println("    --route <route>")
+	fmt.Println("    --help")
 }
 
 func main() {
-	growl := flag.Bool("growl", false, "whether to use growl notifications")
-	locationId := flag.Int("locationId", 13168, "location ID to track")
+	//growl := flag.Bool("growl", false, "whether to use growl notifications")
+	appID := flag.String("appID", "", "Trimet application ID")
+	locationID := flag.Int("locationID", 13168, "location ID to track")
+	route := flag.Int("route", 0, "Route number to filter by")
+	help := flag.Bool("help", false, "Show help information")
 	flag.Parse()
 
-	doc, err := goquery.NewDocument(fmt.Sprintf("http://trimet.org/arrivals/small/tracker?locationID=%d", *locationId))
-	if err != nil {
-		log.Fatal(err)
+	if *help {
+		printHelp()
+		return
 	}
 
-	title, message := titleAndMessage(doc, *locationId)
-	displayMessage(title, message, *growl)
+	if len(*appID) == 0 {
+		log.Fatal("appID is required")
+	}
+
+	rs := NewTrimetService(*appID, false).fetchLocationData(*locationID, *route)
+	printRouteInfo(*locationID, rs)
 }
