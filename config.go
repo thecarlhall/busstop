@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 )
 
@@ -15,28 +16,66 @@ type Config struct {
 }
 
 // ParseFlags parses cli flags to create a config
-func ParseFlags() *Config {
+func ParseFlags(config *Config) *Config {
 	growl := flag.Bool("growl", false, "whether to use growl notifications")
 	appID := flag.String("appID", "", "Trimet application ID")
-	locationID := flag.Int("locationID", 13168, "location ID to track")
+	locationID := flag.Int("locationID", 0, "location ID to track")
 	route := flag.Int("route", 0, "Route number to filter by")
 	help := flag.Bool("help", false, "Show help information")
 	flag.Parse()
 
-	if *help {
-		printHelp()
-		return &Config{}
+	if config == nil {
+		return &Config{
+			appID:      appID,
+			locationID: locationID,
+			route:      route,
+			growl:      growl,
+			help:       help,
+		}
 	}
 
-	if len(*appID) == 0 {
+	if len(*appID) > 0 {
+		config.appID = appID
+	}
+
+	if *locationID > 0 {
+		config.locationID = locationID
+	}
+
+	if *route > 0 {
+		config.route = route
+	}
+
+	if *growl {
+		config.growl = growl
+	}
+
+	if *help {
+		config.help = help
+	}
+
+	return config
+}
+
+func (config *Config) validate() {
+	if len(*config.appID) == 0 {
 		log.Fatal("appID is required")
 	}
 
-	return &Config{
-		appID:      appID,
-		locationID: locationID,
-		route:      route,
-		growl:      growl,
-		help:       help,
+	if *config.locationID == 0 {
+		log.Fatal("locationID is required")
 	}
+}
+
+func (config *Config) printHelp() {
+	fmt.Println("  busstop [OPTIONS]")
+	fmt.Println("")
+	fmt.Println("  Required")
+	fmt.Println("    --appID <app_id>")
+	fmt.Println("    --locationID <loc_id>")
+	fmt.Println("")
+	fmt.Println("  Optional")
+	fmt.Println("    --route <route>")
+	fmt.Println("    --growl")
+	fmt.Println("    --help")
 }

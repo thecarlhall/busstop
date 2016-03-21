@@ -27,23 +27,16 @@ func sprintRouteInfo(rs *ResultSet) string {
 	return msg
 }
 
-func printHelp() {
-	fmt.Println("  busstop [OPTIONS]")
-	fmt.Println("")
-	fmt.Println("  Required")
-	fmt.Println("    --appID <app_id>")
-	fmt.Println("    --locationID <loc_id>")
-	fmt.Println("")
-	fmt.Println("  Optional")
-	fmt.Println("    --route <route>")
-	fmt.Println("    --help")
-}
-
 func main() {
-	config := ParseFlags()
+	config := ParseFlags(nil)
+
+	if *config.help {
+		config.printHelp()
+		return
+	}
 
 	rs := NewTrimetService(*config.appID, false).fetchLocationData(*config.locationID, *config.route)
-	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", config.locationID))
+	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", *config.locationID))
 	routeInfo := sprintRouteInfo(rs)
 	displayMessage(title, routeInfo, *config.growl)
 }
