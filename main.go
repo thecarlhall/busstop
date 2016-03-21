@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os/exec"
@@ -20,11 +19,12 @@ func displayMessage(title string, message string, showGrowl bool) {
 	}
 }
 
-func printRouteInfo(locationID int, rs *ResultSet) {
-	fmt.Printf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", locationID))
+func sprintRouteInfo(rs *ResultSet) string {
+	var msg string
 	for _, arrival := range rs.Arrival {
-		fmt.Printf("%-60s [%s]\n", arrival.FullSign, arrival.arrivalTime())
+		msg += fmt.Sprintf("%-60s [%s]\n", arrival.FullSign, arrival.arrivalTime())
 	}
+	return msg
 }
 
 func printHelp() {
@@ -40,22 +40,10 @@ func printHelp() {
 }
 
 func main() {
-	//growl := flag.Bool("growl", false, "whether to use growl notifications")
-	appID := flag.String("appID", "", "Trimet application ID")
-	locationID := flag.Int("locationID", 13168, "location ID to track")
-	route := flag.Int("route", 0, "Route number to filter by")
-	help := flag.Bool("help", false, "Show help information")
-	flag.Parse()
+	config := ParseFlags()
 
-	if *help {
-		printHelp()
-		return
-	}
-
-	if len(*appID) == 0 {
-		log.Fatal("appID is required")
-	}
-
-	rs := NewTrimetService(*appID, false).fetchLocationData(*locationID, *route)
-	printRouteInfo(*locationID, rs)
+	rs := NewTrimetService(*config.appID, false).fetchLocationData(*config.locationID, *config.route)
+	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", config.locationID))
+	routeInfo := sprintRouteInfo(rs)
+	displayMessage(title, routeInfo, *config.growl)
 }
