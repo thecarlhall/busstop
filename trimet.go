@@ -46,7 +46,12 @@ type Arrival struct {
 	VehicleID    string
 }
 
-func (arrival *Arrival) arrivalTime() string {
+func (arrival *Arrival) ScheduledTime() string {
+	scheduled := time.Unix(0, int64(arrival.Scheduled)*int64(time.Millisecond))
+	return scheduled.Format("3:04pm")
+}
+
+func (arrival *Arrival) UntilArrival() string {
 	scheduled := time.Unix(0, int64(arrival.Scheduled)*int64(time.Millisecond))
 	estimated := time.Unix(0, int64(arrival.Estimated)*int64(time.Millisecond))
 	duration := -time.Since(estimated).Minutes()
@@ -54,11 +59,11 @@ func (arrival *Arrival) arrivalTime() string {
 	var durationStr string
 
 	if duration > 60 || arrival.Estimated == 0 {
-		durationStr = scheduled.Format(time.RFC1123)
+		durationStr = "on " + scheduled.Format("Mon, 02 Jan 2006")
 	} else if duration < 1 {
-		durationStr = "Now"
+		durationStr = "Due now!"
 	} else {
-		durationStr = strconv.FormatFloat(duration, 'f', 0, 64) + "m"
+		durationStr = "in " + strconv.FormatFloat(duration, 'f', 0, 64) + "m"
 	}
 
 	return durationStr

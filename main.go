@@ -22,7 +22,7 @@ func displayMessage(title string, message string, showGrowl bool) {
 func sprintRouteInfo(rs *ResultSet) string {
 	var msg string
 	for _, arrival := range rs.Arrival {
-		msg += fmt.Sprintf("%-60s [%s]\n", arrival.FullSign, arrival.arrivalTime())
+		msg += fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival())
 	}
 	return msg
 }
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	rs := NewTrimetService(*config.appID, false).fetchLocationData(*config.locationID, *config.route)
-	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information for stop %d ]---", *config.locationID))
+	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information For Stop %d ]---", *config.locationID))
 	routeInfo := sprintRouteInfo(rs)
 	displayMessage(title, routeInfo, *config.growl)
 }
