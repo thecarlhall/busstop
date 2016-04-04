@@ -46,11 +46,13 @@ type Arrival struct {
 	VehicleID    string
 }
 
+// ScheduledTime returns a string with the time of the next arrival
 func (arrival *Arrival) ScheduledTime() string {
 	scheduled := time.Unix(0, int64(arrival.Scheduled)*int64(time.Millisecond))
 	return scheduled.Format("3:04pm")
 }
 
+// UntilArrival returns a string with the time until the next arrival
 func (arrival *Arrival) UntilArrival() string {
 	scheduled := time.Unix(0, int64(arrival.Scheduled)*int64(time.Millisecond))
 	estimated := time.Unix(0, int64(arrival.Estimated)*int64(time.Millisecond))
@@ -99,28 +101,29 @@ type Location struct {
 
 // TrimetService handles calls to Trimet's API
 type TrimetService struct {
-	baseURL string
-	appID   string
-	debug   bool
+	BaseURL string
+	AppID   string
+	Debug   bool
 }
 
 // NewTrimetService is the creator for TrimetService
 func NewTrimetService(appID string, debug bool) *TrimetService {
 	return &TrimetService{
-		baseURL: "https://developer.trimet.org/ws/v2/arrivals",
-		appID:   appID,
-		debug:   debug,
+		BaseURL: "https://developer.trimet.org/ws/v2/arrivals",
+		AppID:   appID,
+		Debug:   debug,
 	}
 }
 
-func (ts *TrimetService) fetchLocationData(locID int, route int) *ResultSet {
+// FetchLocationData fetches location data from the Trimet API
+func (ts *TrimetService) FetchLocationData(locID int, route int) *ResultSet {
 	// output for remote call
 	rs := &ArrivalsResponse{}
-	url := fmt.Sprintf("%s?appID=%s&locIDs=%d", ts.baseURL, ts.appID, locID)
+	url := fmt.Sprintf("%s?appID=%s&locIDs=%d", ts.BaseURL, ts.AppID, locID)
 	ts.getJSON(url, rs)
 
-	var arrivals []Arrival
 	if route > 0 {
+		var arrivals []Arrival
 		for _, arrival := range rs.ResultSet.Arrival {
 			if arrival.Route == route {
 				arrivals = append(arrivals, arrival)
@@ -142,7 +145,7 @@ func (ts *TrimetService) getJSON(url string, target interface{}) {
 		log.Fatal(fmt.Sprintf("Unable to get data: %s", resp.Status))
 	}
 
-	if ts.debug {
+	if ts.Debug {
 		body := resp.Body
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(body)

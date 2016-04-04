@@ -6,19 +6,21 @@ import (
 	"os/exec"
 )
 
-func displayMessage(title string, message string, showGrowl bool) {
-	if showGrowl {
-		script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
-		cmd := exec.Command("/usr/bin/osascript", "-e", script)
-		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		fmt.Println(title)
-		fmt.Println(message)
+// displayMessage shows a growl message
+func displayMessage(title string, message string) {
+	script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
+	cmd := exec.Command("/usr/bin/osascript", "-e", script)
+	if err := cmd.Run(); err != nil {
+		log.Fatal(err)
 	}
 }
 
+// printMessage prints a title and message to stdout
+func printMessage(title string, message string) {
+	fmt.Printf("%s\n%s", title, message)
+}
+
+// sprintRouteInfo creates a string that represents the stops of the result set
 func sprintRouteInfo(rs *ResultSet) string {
 	var msg string
 	for _, arrival := range rs.Arrival {
@@ -27,16 +29,37 @@ func sprintRouteInfo(rs *ResultSet) string {
 	return msg
 }
 
-func main() {
-	config := ParseFlags(nil)
+// message creates and communicates (print, growl) a messages for the given parameters
+func message(service *TrimetService, appID string, locID, route int, growl bool) {
+	rs := service.FetchLocationData(locID, route)
+	title := fmt.Sprintf("%60s", fmt.Sprintf("---[ Information For Stop %d ]---", locID))
+	message := sprintRouteInfo(rs)
+	if growl {
+		displayMessage(title, message)
+	} else {
+		printMessage(title, message)
+	}
+}
 
-	if *config.help {
+func main() {
+	config := LoadDefaultConfig()
+	if config.Debug {
+		fmt.Printf("%+v\n", config)
+	}
+
+	if config.Help {
 		config.printHelp()
 		return
 	}
 
-	rs := NewTrimetService(*config.appID, false).fetchLocationData(*config.locationID, *config.route)
-	title := fmt.Sprintf("%60s\n", fmt.Sprintf("---[ Information For Stop %d ]---", *config.locationID))
-	routeInfo := sprintRouteInfo(rs)
-	displayMessage(title, routeInfo, *config.growl)
+	service := NewTrimetService(config.AppID, config.Debug)
+	for _, stop := range config.Stops {
+		if len(stop.Routes) == 0 {
+			message(service, config.AppID, stop.LocID, 0, config.Growl)
+		} else {
+			for _, route := range stop.Routes {
+				message(service, config.AppID, stop.LocID, route, config.Growl)
+			}
+		}
+	}
 }
