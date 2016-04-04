@@ -24,7 +24,11 @@ func printMessage(title string, message string) {
 func sprintRouteInfo(rs *ResultSet) string {
 	var msg string
 	for _, arrival := range rs.Arrival {
-		msg += fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival())
+		var prefix string
+		if arrival.Detoured {
+			prefix = "/!\\ "
+		}
+		msg += fmt.Sprintf("%-60s | %s %s\n", prefix+arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival())
 	}
 	return msg
 }

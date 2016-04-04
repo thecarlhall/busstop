@@ -29,8 +29,8 @@ func TestLoadConfig(t *testing.T) {
 	tempFile, _ := ioutil.TempFile("", "busstop")
 	defer os.Remove(tempFile.Name())
 
-	enc := json.NewEncoder(tempFile)
-	enc.Encode(expected)
+	json.NewEncoder(tempFile).Encode(expected)
+	tempFile.Close()
 
 	found := LoadConfig(tempFile.Name())
 
