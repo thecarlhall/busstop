@@ -7,7 +7,7 @@ import (
 )
 
 // displayNotification shows a growl message
-func displayNotification(title string, message string) {
+func notify(title string, message string) {
 	script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
 	cmd := exec.Command("/usr/bin/osascript", "-e", script)
 	if err := cmd.Run(); err != nil {
@@ -37,7 +37,7 @@ func message(service *TrimetService, appID string, locID int, routes []int, sche
 		title := fmt.Sprintf("Information For Stop %d", locID)
 		message := sprintRouteInfo(rs)
 		if growl {
-			displayNotification(title, message)
+			notify(title, message)
 		} else {
 			console(title, message)
 		}
