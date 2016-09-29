@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
 	"time"
 )
 
@@ -25,23 +27,25 @@ func makeMessage(service *TrimetService, locID int, routes []int, schedules []st
 	}
 }
 
-func main() {
+func setupLogFile() *os.File {
 	// Setup logging to go to a file
-	f, err := os.OpenFile("~/.busstop.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	usr, _ := user.Current()
+	f, err := os.OpenFile(filepath.Join(usr.HomeDir, ".busstop.log"), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatalf("Error opening log file: %v", err)
 	}
-	defer f.Close()
 	log.SetOutput(f)
+
+	return f
+}
+
+func main() {
+	logFile := setupLogFile()
+	defer logFile.Close()
 
 	config := LoadDefaultConfig()
 
-	if config.Help {
-		config.PrintHelp()
-		return
-	}
-
-	messenger := NewMessenger(*config)
+	messenger := NewMessenger(config)
 	for {
 		service := NewTrimetService(config.AppID, config.Debug)
 		for _, stop := range config.Stops {

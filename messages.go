@@ -40,7 +40,7 @@ func (GrowlMessenger) Emit(message Message) {
 		script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", body, message.Subject)
 		cmd := exec.Command("/usr/bin/osascript", "-e", script)
 		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
+			log.Print(err)
 		}
 	}
 }

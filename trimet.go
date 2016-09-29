@@ -152,12 +152,12 @@ func (ts *TrimetService) FetchLocationData(locID int, routes []int, schedules []
 func (ts *TrimetService) getJSON(url string, target interface{}) {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode/100 != 2 {
-		log.Fatal(fmt.Sprintf("Unable to get data: %s", resp.Status))
+		log.Printf("Unable to get data: %s", resp.Status)
 	}
 
 	if ts.Debug {
@@ -170,6 +170,6 @@ func (ts *TrimetService) getJSON(url string, target interface{}) {
 
 	err = json.NewDecoder(resp.Body).Decode(target)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 }
