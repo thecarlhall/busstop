@@ -95,6 +95,6 @@ func (config *Config) validate() {
 	}
 }
 
-func (config *Config) printHelp() {
+func (config *Config) PrintHelp() {
 	flag.PrintDefaults()
 }

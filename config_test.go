@@ -12,11 +12,11 @@ func TestLoadConfig(t *testing.T) {
 	expected := Config{
 		AppID: "abc123",
 		Stops: []Stop{
-			Stop{
+			{
 				LocID:  123,
 				Routes: []int{1, 2},
 			},
-			Stop{
+			{
 				LocID:  124,
 				Routes: []int{3},
 			},

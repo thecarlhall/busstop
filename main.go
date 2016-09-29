@@ -3,57 +3,56 @@ package main
 import (
 	"fmt"
 	"log"
-	"os/exec"
+	"os"
+	"time"
 )
 
-// displayNotification shows a growl message
-func notify(title string, message string) {
-	script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title)
-	cmd := exec.Command("/usr/bin/osascript", "-e", script)
-	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-// console prints a title and message to stdout
-func console(title string, message string) {
-	fmt.Printf("%60s\n%s\n", fmt.Sprintf("---[  %s  ]---", title), message)
-}
-
-// sprintRouteInfo creates a string that represents the stops of the result set
-func sprintRouteInfo(rs *ResultSet) string {
-	var msg string
-	for _, arrival := range rs.Arrival {
-		msg += fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival())
-	}
-	return msg
-}
-
 // message creates and communicates (print, growl) a messages for the given parameters
-func message(service *TrimetService, appID string, locID int, routes []int, schedules []string, growl bool) {
+func makeMessage(service *TrimetService, locID int, routes []int, schedules []string) Message {
 	rs := service.FetchLocationData(locID, routes, schedules)
 
+	title := fmt.Sprintf("Information For Stop %d", locID)
+	var messages []string
 	if len(rs.Arrival) > 0 {
-		title := fmt.Sprintf("Information For Stop %d", locID)
-		message := sprintRouteInfo(rs)
-		if growl {
-			notify(title, message)
-		} else {
-			console(title, message)
+		for _, arrival := range rs.Arrival {
+			messages = append(messages, fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival()))
 		}
+	}
+
+	return Message{
+		Subject: title,
+		Bodies:  messages,
 	}
 }
 
 func main() {
+	// Setup logging to go to a file
+	f, err := os.OpenFile("~/.busstop.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Error opening log file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
 	config := LoadDefaultConfig()
 
 	if config.Help {
-		config.printHelp()
+		config.PrintHelp()
 		return
 	}
 
-	service := NewTrimetService(config.AppID, config.Debug)
-	for _, stop := range config.Stops {
-		message(service, config.AppID, stop.LocID, stop.Routes, stop.Schedules, config.Growl)
+	messenger := NewMessenger(*config)
+	for {
+		service := NewTrimetService(config.AppID, config.Debug)
+		for _, stop := range config.Stops {
+			messages := makeMessage(service, stop.LocID, stop.Routes, stop.Schedules)
+			messenger.Emit(messages)
+		}
+
+		if config.Frequency == 0 {
+			break
+		}
+
+		time.Sleep(time.Duration(config.Frequency) * time.Second)
 	}
 }
