@@ -8,7 +8,7 @@ import (
 )
 
 func NewMessenger(config Config) Messenger {
-	if config.Growl {
+	if config.Visual {
 		return GrowlMessenger{}
 	} else {
 		return ConsoleMessenger{}

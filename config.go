@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"os/user"
 	"path/filepath"
 )
@@ -14,7 +15,7 @@ type Config struct {
 	AppID     string
 	Stops     []Stop
 	Debug     bool
-	Growl     bool
+	Visual    bool
 	Frequency int
 }
 
@@ -26,29 +27,41 @@ type Stop struct {
 }
 
 // LoadDefaultConfig loads the configuration file at ~/.busstop then overrides with CLI flags
-func LoadDefaultConfig() Config {
+func LoadConfig() (Config, error) {
 	usr, _ := user.Current()
-	configFile := filepath.Join(usr.HomeDir, ".busstop")
-
-	var config Config
-	file, _ := ioutil.ReadFile(configFile)
-	json.Unmarshal(file, &config)
-
-	if config.Debug {
-		fmt.Printf("%+v\n", config)
+	configFilename := filepath.Join(usr.HomeDir, ".busstop")
+	configFile, err := os.Open(configFilename)
+	if err != nil {
+		return Config{}, err
 	}
 
-	config.validate()
+	var config Config
+	dec := json.NewDecoder(configFile)
+	dec.Decode(&config)
 
-	return config
+	if config.Debug {
+		fmt.Printf("Config: %+v\n", config)
+	}
+
+	if config.validate() {
+		return config, nil
+	} else {
+		return config, errors.New("Invalid configuration")
+	}
 }
 
-func (config Config) validate() {
+func (config Config) validate() bool {
+	valid := true
+
 	if len(config.AppID) == 0 {
-		log.Fatal("appID is required")
+		log.Print("Config: appID is required\n")
+		valid = false
 	}
 
 	if len(config.Stops) == 0 {
-		log.Fatal("stops are required")
+		log.Print("Config: stops are required\n")
+		valid = false
 	}
+
+	return valid
 }

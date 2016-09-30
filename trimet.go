@@ -99,20 +99,20 @@ type Location struct {
 	PassengerCode string
 }
 
+// NewTrimetService is the creator for TrimetService
+func NewTrimetService(config Config) *TrimetService {
+	return &TrimetService{
+		BaseURL: "https://developer.trimet.org/ws/v2/arrivals",
+		AppID:   config.AppID,
+		Debug:   config.Debug,
+	}
+}
+
 // TrimetService handles calls to Trimet's API
 type TrimetService struct {
 	BaseURL string
 	AppID   string
 	Debug   bool
-}
-
-// NewTrimetService is the creator for TrimetService
-func NewTrimetService(appID string, debug bool) *TrimetService {
-	return &TrimetService{
-		BaseURL: "https://developer.trimet.org/ws/v2/arrivals",
-		AppID:   appID,
-		Debug:   debug,
-	}
 }
 
 // FetchLocationData fetches location data from the Trimet API

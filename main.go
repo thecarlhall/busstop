@@ -27,7 +27,7 @@ func makeMessage(service *TrimetService, locID int, routes []int, schedules []st
 	}
 }
 
-func setupLogFile() *os.File {
+func setupLogFile() (*os.File, error) {
 	// Setup logging to go to a file
 	usr, _ := user.Current()
 	f, err := os.OpenFile(filepath.Join(usr.HomeDir, ".busstop.log"), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
@@ -36,18 +36,25 @@ func setupLogFile() *os.File {
 	}
 	log.SetOutput(f)
 
-	return f
+	return f, err
 }
 
 func main() {
-	logFile := setupLogFile()
+	logFile, err := setupLogFile()
+	if err != nil {
+		log.Print(err)
+		return
+	}
 	defer logFile.Close()
 
-	config := LoadDefaultConfig()
+	config, err := LoadConfig()
+	if err != nil {
+		return
+	}
 
 	messenger := NewMessenger(config)
 	for {
-		service := NewTrimetService(config.AppID, config.Debug)
+		service := NewTrimetService(config)
 		for _, stop := range config.Stops {
 			messages := makeMessage(service, stop.LocID, stop.Routes, stop.Schedules)
 			messenger.Emit(messages)
