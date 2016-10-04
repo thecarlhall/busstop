@@ -36,7 +36,9 @@ func (ConsoleMessenger) Emit(message Message) {
 type GrowlMessenger struct{}
 
 func (GrowlMessenger) Emit(message Message) {
-	for _, body := range message.Bodies {
+	// iterate in reverse so that the latest time is shown last and longest
+	for i := len(message.Bodies) - 1; i >= 0; i-- {
+		body := message.Bodies[i]
 		script := fmt.Sprintf("display notification \"%s\" with title \"%s\"", body, message.Subject)
 		cmd := exec.Command("/usr/bin/osascript", "-e", script)
 		if err := cmd.Run(); err != nil {

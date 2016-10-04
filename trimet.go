@@ -153,6 +153,7 @@ func (ts *TrimetService) getJSON(url string, target interface{}) {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Print(err)
+		return
 	}
 	defer resp.Body.Close()
 
