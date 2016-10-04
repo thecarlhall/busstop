@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/user"
@@ -40,7 +39,7 @@ func LoadConfig() (Config, error) {
 	dec.Decode(&config)
 
 	if config.Debug {
-		fmt.Printf("Config: %+v\n", config)
+		log.Printf("Config: %+v\n", config)
 	}
 
 	if config.validate() {

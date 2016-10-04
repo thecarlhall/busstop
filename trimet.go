@@ -166,7 +166,7 @@ func (ts *TrimetService) getJSON(url string, target interface{}) {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(body)
 		s := buf.String()
-		fmt.Printf("Body: %s\n", s)
+		log.Printf("Body: %s\n", s)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(target)
