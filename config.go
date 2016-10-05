@@ -11,11 +11,12 @@ import (
 
 // Config is the configuration for the app
 type Config struct {
-	AppID     string
-	Stops     []Stop
-	Debug     bool
-	Visual    bool
-	Frequency int
+	AppID                 string
+	Stops                 []Stop
+	Debug                 bool
+	Display               string
+	PollingFrequency      int
+	NotificationThreshold int
 }
 
 // Stop is the stop information to report
@@ -23,6 +24,11 @@ type Stop struct {
 	LocID     int
 	Routes    []int
 	Schedules []string
+}
+
+type Notification struct {
+	Threshold int
+	Frequency int
 }
 
 // LoadDefaultConfig loads the configuration file at ~/.busstop then overrides with CLI flags

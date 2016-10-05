@@ -6,18 +6,38 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"time"
 )
 
-// message creates and communicates (print, growl) a messages for the given parameters
-func makeMessage(service *TrimetService, locID int, routes []int, schedules []string) Message {
-	rs := service.FetchLocationData(locID, routes, schedules)
+var (
+	arrivingBusTime = regexp.MustCompile(`in (\d+)m`)
+)
 
-	title := fmt.Sprintf("Information For Stop %d", locID)
+// message creates and communicates (print, growl) a messages for the given parameters
+func makeMessage(service *TrimetService, stop Stop, notitificationThreshold int) Message {
+	rs := service.FetchLocationData(stop)
+
+	title := fmt.Sprintf("Information For Stop %d", stop.LocID)
 	var messages []string
 	if len(rs.Arrival) > 0 {
 		for _, arrival := range rs.Arrival {
-			messages = append(messages, fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), arrival.UntilArrival()))
+			approxArrivalTime := arrival.UntilArrival()
+
+			arrivalTime := arrivingBusTime.FindStringSubmatch(approxArrivalTime)
+			if arrivalTime == nil {
+				continue
+			}
+
+			minutesUntil, err := strconv.ParseInt(arrivalTime[1], 10, 32)
+			if err != nil {
+				continue
+			}
+
+			if int(minutesUntil) <= notitificationThreshold {
+				messages = append(messages, fmt.Sprintf("%-60s | %s %s\n", arrival.FullSign, arrival.ScheduledTime(), approxArrivalTime))
+			}
 		}
 	}
 
@@ -56,14 +76,14 @@ func main() {
 	for {
 		service := NewTrimetService(config)
 		for _, stop := range config.Stops {
-			messages := makeMessage(service, stop.LocID, stop.Routes, stop.Schedules)
+			messages := makeMessage(service, stop, config.NotificationThreshold)
 			messenger.Emit(messages)
 		}
 
-		if config.Frequency == 0 {
+		if config.PollingFrequency <= 0 {
 			break
 		}
 
-		time.Sleep(time.Duration(config.Frequency) * time.Second)
+		time.Sleep(time.Duration(config.PollingFrequency) * time.Minute)
 	}
 }

@@ -116,16 +116,16 @@ type TrimetService struct {
 }
 
 // FetchLocationData fetches location data from the Trimet API
-func (ts *TrimetService) FetchLocationData(locID int, routes []int, schedules []string) *ResultSet {
+func (ts *TrimetService) FetchLocationData(stop Stop) *ResultSet {
 	// output for remote call
 	rs := &ArrivalsResponse{}
-	url := fmt.Sprintf("%s?appID=%s&locIDs=%d", ts.BaseURL, ts.AppID, locID)
+	url := fmt.Sprintf("%s?appID=%s&locIDs=%d", ts.BaseURL, ts.AppID, stop.LocID)
 	ts.getJSON(url, rs)
 
-	if len(routes) > 0 {
+	if len(stop.Routes) > 0 {
 		var arrivals []Arrival
 		for _, arrival := range rs.ResultSet.Arrival {
-			for _, route := range routes {
+			for _, route := range stop.Routes {
 				if arrival.Route == route {
 					arrivals = append(arrivals, arrival)
 				}
@@ -134,10 +134,10 @@ func (ts *TrimetService) FetchLocationData(locID int, routes []int, schedules []
 		rs.ResultSet.Arrival = arrivals
 	}
 
-	if len(schedules) > 0 {
+	if len(stop.Schedules) > 0 {
 		var arrivals []Arrival
 		for _, arrival := range rs.ResultSet.Arrival {
-			for _, schedule := range schedules {
+			for _, schedule := range stop.Schedules {
 				if arrival.ScheduledTime() == schedule {
 					arrivals = append(arrivals, arrival)
 				}
